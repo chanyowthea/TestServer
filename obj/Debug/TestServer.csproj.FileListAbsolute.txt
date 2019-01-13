@@ -1,0 +1,7 @@
+D:\_GameDesign\VSProjects\TestServer\TestServer\obj\Debug\TestServer.csproj.CoreCompileInputs.cache
+D:\_GameDesign\VSProjects\TestServer\TestServer\bin\Debug\TestServer.exe.config
+D:\_GameDesign\VSProjects\TestServer\TestServer\bin\Debug\TestServer.exe
+D:\_GameDesign\VSProjects\TestServer\TestServer\bin\Debug\TestServer.pdb
+D:\_GameDesign\VSProjects\TestServer\TestServer\obj\Debug\TestServer.exe
+D:\_GameDesign\VSProjects\TestServer\TestServer\obj\Debug\TestServer.pdb
+D:\_GameDesign\VSProjects\TestServer\TestServer\obj\Debug\TestServer.csprojAssemblyReference.cache
