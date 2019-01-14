@@ -11,12 +11,13 @@ namespace TestClient
     class SocketTcpClient
     {
         Socket _ClientSocket; 
-        MemoryStream _SendStream = new MemoryStream();
+        MemoryStream _SendStream;
         BinaryWriter _SendWriter;
 
         public void Start()
         {
             _ClientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _SendStream = new MemoryStream();
             _SendWriter = new BinaryWriter(_SendStream); 
         }
 
@@ -43,8 +44,21 @@ namespace TestClient
             _SendWriter.Write((short)_Version++);
             _SendWriter.Write((short)_Command++);
             _SendWriter.Write(bytes.Length);
-            _SendWriter.Write(bytes); 
-            _ClientSocket.Send(_SendStream.ToArray()); 
+            _SendWriter.Write(bytes);
+
+            var streamBuffer = _SendStream.GetBuffer(); 
+            byte[] buffer = new byte[(int)_SendStream.Position];
+            Buffer.BlockCopy(streamBuffer, 0, buffer, 0, (int)_SendStream.Position);
+
+            string output = "";
+            for (int i = 0, length = buffer.Length; i < length; i++)
+            {
+                output += buffer[i] + ", ";
+            }
+            Console.WriteLine("output=" + output);
+
+            _ClientSocket.Send(buffer);
+
         }
     }
 }

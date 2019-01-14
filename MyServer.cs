@@ -32,6 +32,11 @@ namespace TestServer
             {
                 return _PacketBytesTotalLength - _CurPacketBytes.Count;
             }
+
+            public override string ToString()
+            {
+                return string.Format("_Version={0}, _CommandId={1}, _PacketBytesTotalLength={2}", _Version, _CommandId, _PacketBytesTotalLength);
+            }
         }
 
         Dictionary<Socket, ClientData> _Clients = new Dictionary<Socket, ClientData>();
@@ -45,8 +50,9 @@ namespace TestServer
             return null;
         }
 
-        const int _BaseSize = 1024;
+        const int _BaseSize = 16;
         byte[] _Buffer = new byte[_BaseSize];
+        List<byte> _SurplusBuffer = new List<byte>();
         PacketData _CurPacketData;
 
         public void Start()
@@ -90,32 +96,69 @@ namespace TestServer
                 }
 
                 clientData._ReceivedDataLength = clientSocket.EndReceive(result);
-                MemoryStream stream = new MemoryStream(_Buffer.Take(clientData._ReceivedDataLength).ToArray());
+                string output = "";
+                for (int i = 0, length = _Buffer.Length; i < length; i++)
+                {
+                    output += _Buffer[i] + ", ";
+                }
+                Console.WriteLine("clientData._ReceivedDataLength=" + clientData._ReceivedDataLength + ", output=" + output);
+
+                int totalBufferBytesCount = 0;
+                MemoryStream stream = null;
+                if (_SurplusBuffer.Count > 0)
+                {
+                    _SurplusBuffer.AddRange(_Buffer.Take(clientData._ReceivedDataLength).ToArray()); 
+                    stream = new MemoryStream(_SurplusBuffer.ToArray()); 
+                    totalBufferBytesCount = _SurplusBuffer.Count;
+                    _SurplusBuffer.Clear(); 
+                }
+                else
+                {
+                    totalBufferBytesCount = clientData._ReceivedDataLength; 
+                    stream = new MemoryStream(_Buffer.Take(clientData._ReceivedDataLength).ToArray());
+                }
                 BinaryReader reader = new BinaryReader(stream);
-                while (reader.PeekChar() > 0)
+                while (reader.BaseStream.Position < totalBufferBytesCount - 1)
                 {
                     if (_CurPacketData != null)
                     {
                         if (_CurPacketData.NeedBytes() > 0)
                         {
-                            Console.WriteLine("continue collect incomplete packet! _CurPacketData.NeedBytes()=" + _CurPacketData.NeedBytes());
+                            Console.WriteLine("continue collect incomplete packet! _CurPacketData.NeedBytes()=" + _CurPacketData.NeedBytes() + ", data=" + _CurPacketData);
                             _CurPacketData._CurPacketBytes.AddRange(reader.ReadBytes(_CurPacketData.NeedBytes()));
                         }
 
                         if (_CurPacketData.NeedBytes() == 0)
                         {
+                            string output1 = "";
+                            for (int i = 0, length = _CurPacketData._CurPacketBytes.Count; i < length; i++)
+                            {
+                                output1 += _CurPacketData._CurPacketBytes[i] + ", ";
+                            }
+                            Console.WriteLine("=====output1=" + output1);
+
                             // process current packet
-                            Console.WriteLine(Encoding.UTF8.GetString(_CurPacketData._CurPacketBytes.ToArray()));
+                            Console.WriteLine("assemble data successful! " + Encoding.UTF8.GetString(_CurPacketData._CurPacketBytes.ToArray()) + ", data=" + _CurPacketData);
                             _CurPacketData = null;
                         }
+                        continue;
+                    }
+
+                    int leftCount = totalBufferBytesCount - (int)reader.BaseStream.Position;
+                    if (leftCount < 12)
+                    {
+                        _SurplusBuffer.AddRange(reader.ReadBytes(leftCount));
+                        Console.WriteLine("[INFO]leftCount < 12! ");
                         break;
                     }
 
                     // 数据总长度[4个字节] + 版本号[2个字节] + 命令号[2个字节] + 消息内容长度[4个字节] + 不定长数据
                     var totalLength = reader.ReadInt32();
+                    Console.WriteLine("read total length=" + totalLength);
                     if (totalLength < 4)
                     {
-                        break;
+                        Console.WriteLine("[ERROR]totalLength < 4! ");
+                        continue;
                     }
                     var version = reader.ReadInt16();
                     var commandId = reader.ReadInt16();
@@ -130,12 +173,19 @@ namespace TestServer
                         _CurPacketData._CommandId = commandId;
                         _CurPacketData._PacketBytesTotalLength = contentLength;
                         _CurPacketData._CurPacketBytes.AddRange(bytes);
-                        Console.WriteLine("start collect incomplete packet! contentLength=" + contentLength + ", collect length=" + bytes.Length); 
-                        break;
+                        Console.WriteLine("start collect incomplete packet! contentLength=" + contentLength + ", collect length=" + bytes.Length + ", data=" + _CurPacketData);
+                        continue;
                     }
 
+                    string output2 = "";
+                    for (int i = 0, length = bytes.Length; i < length; i++)
+                    {
+                        output2 += bytes[i] + ", ";
+                    }
+                    Console.WriteLine("=====output1=" + output2);
+
                     // process current packet
-                    Console.WriteLine("receive packet data=" + Encoding.UTF8.GetString(bytes));
+                    Console.WriteLine("receive packet data=" + Encoding.UTF8.GetString(bytes) + ", data=" + _CurPacketData);
                 }
                 clientSocket.BeginReceive(_Buffer, 0, _Buffer.Length, SocketFlags.None, ReceiveCallback, clientSocket);
             }
