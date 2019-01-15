@@ -41,6 +41,8 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PureTcpClient.cs" />
+    <Compile Include="PureUdpClient.cs" />
     <Compile Include="SocketTcpClient.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

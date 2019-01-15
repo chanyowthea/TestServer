@@ -12,10 +12,14 @@ namespace TestServer
     {
         static void Main(string[] args)
         {
-            SocketTcpServer1 server = new SocketTcpServer1();
+            //SocketTcpServer1 server = new SocketTcpServer1();
+            //PureTcpServer server = new PureTcpServer();
+
+            PureUdpServer server = new PureUdpServer();
             server.Start();
             // 防止运行后立即退出
             while (true) { }
+            //server.Stop(); 
         }
     }
 }
