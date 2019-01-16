@@ -16,7 +16,9 @@ namespace TestClient
         static void Main(string[] args)
         {
             //PureTcpClient c = new PureTcpClient();
-            PureUdpClient c = new PureUdpClient();
+            //PureUdpClient c = new PureUdpClient();
+
+            SocketUdpClient c = new SocketUdpClient();
             c.Start(); 
             return; 
 

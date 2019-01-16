@@ -14,8 +14,9 @@ namespace TestServer
         {
             //SocketTcpServer1 server = new SocketTcpServer1();
             //PureTcpServer server = new PureTcpServer();
+            //PureUdpServer server = new PureUdpServer();
 
-            PureUdpServer server = new PureUdpServer();
+            SocketUdpClient server = new SocketUdpClient();
             server.Start();
             // 防止运行后立即退出
             while (true) { }
